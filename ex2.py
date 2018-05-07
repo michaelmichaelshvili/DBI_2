@@ -1,9 +1,23 @@
 import os
+
+# return the n'th occurency of needle in haystack
+def indexof(haystack, needle, n):
+    start = haystack.find(needle)
+    while start >= 0 and n > 1:
+        start = haystack.find(needle, start+1)
+        n -= 1
+    return start
+
+
 class Heap:
     def __init__(self, file_name):
         """
         :param file_name: the name of the heap file to create. example: kiva_heap.txt
         """
+        self.file_name = file_name
+        f = open(file_name, 'w')
+        f.close()
+
 
 
     def create(self, source_file):
@@ -11,12 +25,17 @@ class Heap:
         The function create heap file from source file.
         :param source_file: the name of file to create from. example: kiva.txt
         """
+        with open(source_file, 'r+') as source, open(self.file_name,'w') as destination:
+            for line in source:
+                destination.write(line)
 
     def insert(self, line):
         """
         The function insert new line to heap file
         :param line: string reprsent new row, separated by comma. example: '653207,1500.0,USD,Agriculture'
         """
+        with open(self.file_name,'a+') as destination:
+            destination.write(line+'\n')
 
     def delete(self, col_name, value):
         """
@@ -25,6 +44,20 @@ class Heap:
         :param col_name: the name of the column. example: 'currency'
         :param value: example: 'PKR'
         """
+        with open(self.file_name, 'r') as destination:
+            title = destination.readline().strip().split(',')
+            title_dict = {title[i]: i for i in range(title.__len__())}
+
+        tmp_name = 'tmp.txt'
+        with open(self.file_name,'r+') as origin, open(tmp_name, 'w') as tmp_file:
+            for line in origin:
+                splitted = line.strip().split(',')
+                if str(value) == splitted[title_dict[col_name]]:
+                    continue
+                tmp_file.write(line)
+
+        self.create(tmp_name)
+        os.remove(tmp_name)
 
 
     def update(self, col_name, old_value, new_value):
@@ -34,13 +67,31 @@ class Heap:
         :param old_value: example: 'TZS'
         :param new_value: example: 'NIS'
         """
+        with open(self.file_name, 'r') as destination:
+            title = destination.readline().strip().split(',')
+            title_dict = {title[i]: i for i in range(title.__len__())}
+
+        tmp_name = 'tmp.txt'
+        with open(self.file_name,'r+') as origin, open(tmp_name, 'w') as tmp_file:
+            for line in origin:
+                splitted = line.strip().split(',')
+                if str(old_value) == splitted[title_dict[col_name]]:
+                    splitted[title_dict[col_name]] = new_value
+                    line = ','.join(splitted) + '\n'
+                tmp_file.write(line)
+
+        self.create(tmp_name)
+        os.remove(tmp_name)
 
 
-# heap = Heap('heap.txt')
-# heap.create('kiva.txt')
-# heap.insert('653207,1500.0,USD,Agriculture')
-# heap.update('currency','PKR','NIS')
-# heap.delete('currency','NIS')
+'''
+heap = Heap('heap.txt')
+heap.create('kiva_loans.txt')
+heap.insert('653207,1500.0,NIS,Agriculture')
+heap.update('currency','PKR','NIS')
+heap.delete('currency','NIS')
+'''
+
 
 class SortedFile:
 
@@ -49,18 +100,69 @@ class SortedFile:
         :param file_name: the name of the sorted file to create. example: kiva_sorted.txt
         :param col_name: the name of the column to sort by. example: 'lid'
         """
+        self.file_name = file_name
+        self.col_name = col_name
+        f = open(file_name, 'w')
+        f.close()
+
 
     def create(self, source_file):
         """
         The function create sorted file from source file.
         :param source_file: the name of file to create from. example: kiva.txt
         """
+        with open(source_file, 'r') as destination:
+            title = destination.readline().strip().split(',')
+            title_dict = {title[i]: i for i in range(title.__len__())}
+
+        with open(source_file, 'r') as destination:
+            destination.seek(destination.readline().__len__() + 1)
+            id_list = [line.split(',')[title_dict[self.col_name]] for line in destination]
+        id_list= list(set(id_list))
+        id_list.sort()
+        with open(source_file, 'r+') as source, open(self.file_name, 'w') as destination:
+            destination.write(','.join(title)+'\n')
+            for id in id_list:
+                source.seek(0)
+                source.seek(source.readline().__len__() + 1)
+                for line in source:
+                    if line.strip().split(',')[title_dict[self.col_name]] == str(id):
+                        destination.write(line)
+
+
 
     def insert(self, line):
         """
         The function insert new line to sorted file according to the value of col_name.
         :param line: string of row separated by comma. example: '653207,1500.0,USD,Agriculture'
+
+        with open(self.file_name, 'r') as destination:
+            title = destination.readline().strip().split(',')
+            title_dict = {title[i]: i for i in range(title.__len__())}
+
+        tmp_name = 'tmp.txt'
+        line_id = line.strip().split(',')[title_dict[self.col_name]]
+        flag = False
+        with open(self.file_name,'r+') as origin, open(tmp_name, 'w') as tmp_file:
+            for _line in origin:
+                splitted = _line.strip().split(',')
+                if not flag and str(line_id) < splitted[title_dict[self.col_name]]:
+                    tmp_file.write(line + '\n')
+                    flag = True
+                tmp_file.write(_line)
+
+            if not flag:
+                tmp_file.write(line + '\n')
         """
+        tmp_name = 'tmp.txt'
+        with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
+            for line in source:
+                destination.write(line)
+            destination.write(line)
+            print(destination.readlines())
+
+        self.create(tmp_name)
+        os.remove(tmp_name)
 
     def delete(self, value):
         """
@@ -77,9 +179,9 @@ class SortedFile:
         """
 
 
-# sf = SortedFile('SortedFile.txt', 'currency')
-# sf.create('kiva.txt')
-# sf.insert('653207,2.0,USD,Agriculture')
+sf = SortedFile('SortedFile.txt', 'currency')
+sf.create('kiva_loans.txt')
+sf.insert('653207,2.0,USD,Agriculture')
 # sf.delete('625.0')
 # sf.update('150.0','12')
 
