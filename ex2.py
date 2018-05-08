@@ -10,6 +10,16 @@ def indexof(haystack, needle, n):
     return start
 
 
+def randomFileName(size=5):
+    while True:
+        try:
+            filen = os.urandom(size)
+            with open(str(filen) + '.txt', 'w'):
+                return filen
+        except:
+            pass
+
+
 class Heap:
     def __init__(self, file_name):
         """
@@ -141,7 +151,7 @@ class SortedFile:
                 if current_id == max_id:
                     break
                 current_id = next_min_id
-            destination.seek(os.path.getsize(self.file_name)/2)
+            destination.seek(os.path.getsize(self.file_name) / 2)
             print(destination.readline())
 
     def insert(self, line):
@@ -183,7 +193,6 @@ class SortedFile:
         :param value: example: 'PKR'
         """
 
-
     def update(self, old_value, new_value):
         """
         The function update records from the sorted file where their value in col_name is old_value to new_value.
@@ -207,11 +216,11 @@ class SortedFile:
         os.remove(tmp_name)
 
 
-sf = SortedFile('SortedFile.txt', 'loan_amount')
-sf.create('kiva_loans.txt')
-#sf.insert('653207,2.0,USD,Agriculture')
-#sf.delete('625.0')
-#sf.update('150.0', '12')
+# sf = SortedFile('SortedFile.txt', 'loan_amount')
+# sf.create('kiva_loans.txt')
+# sf.insert('653207,2.0,USD,Agriculture')
+# sf.delete('625.0')
+# sf.update('150.0', '12')
 
 
 class Hash:
@@ -252,6 +261,7 @@ class Hash:
         :param value: the value of col_name.
         :param ptr: the row number of the instance in the heap file.
         """
+
 
 # heap = Heap("heap_for_hash.txt")
 # hash = Hash('hash_file.txt', 10)
@@ -337,4 +347,24 @@ def line_binary_search(filename, matchvalue, key=lambda val: val):
         else:
             raise RuntimeError('binary search failed')
 
-print line_binary_search('kiva_loans.txt','653067')
+
+# print line_binary_search('kiva_loans.txt','653067')
+
+
+
+
+fp = open('stam.txt')
+fp.seek(0, 2)
+begin = 0
+end = fp.tell()
+
+while (begin < end):
+    fp.seek((end - begin) / 2, 0)
+    s = fp.readline()
+    line_key = fp.readline()
+    if ('1025' == line_key.strip()):
+        print 'falafel'
+    elif ('1025' > line_key) and line_key !='':
+        begin = fp.tell()
+    else:
+        end = fp.tell()
