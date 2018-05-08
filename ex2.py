@@ -360,11 +360,22 @@ end = fp.tell()
 
 while (begin < end):
     fp.seek((end - begin) / 2, 0)
-    s = fp.readline()
+    flag = False
+    x = fp.read(1)
+    while(x != '\n') and not flag:
+        try:
+            fp.seek(fp.tell()-2, 0)
+        except IOError:
+            flag = True
+            fp.seek(0)
+        x = fp.read(1)
+    #if not flag:
+    #    s = fp.readline()
+    place = fp.tell()
     line_key = fp.readline()
     if ('1025' == line_key.strip()):
         print 'falafel'
-    elif ('1025' > line_key) and line_key !='':
-        begin = fp.tell()
+    elif ('1025' > line_key) :#and line_key !='':
+        begin = place
     else:
-        end = fp.tell()
+        end = place
