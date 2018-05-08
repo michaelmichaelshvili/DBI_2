@@ -355,11 +355,11 @@ def line_binary_search(filename, matchvalue, key=lambda val: val):
 
 fp = open('stam.txt')
 fp.seek(0, 2)
-begin = 0
+begin = fp.readline().__len__()
 end = fp.tell()
 
 while (begin < end):
-    fp.seek((end - begin) / 2, 1)
+    fp.seek(begin + ((end - begin) / 2), 0)
     flag = False
     x = fp.read(1)
     while(x != '\n') and not flag:
@@ -370,14 +370,14 @@ while (begin < end):
         x = fp.read(1)
         if flag:
             fp.seek(0)
-    #if not flag:
-    #    s = fp.readline()
+    if flag:
+       s = fp.readline()
     place = fp.tell()
     line_key = fp.readline()
-    if ('8' == line_key.strip()):
+    if ('0' == line_key.strip()):
         print 'falafel'
         break
-    elif ('8' > line_key.strip()) :#and line_key !='':
+    elif ('0' > line_key.strip()) :#and line_key !='':
         begin = place
     else:
         end = place
