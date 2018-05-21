@@ -62,7 +62,7 @@ class Heap:
             for line in origin:
                 splitted = line.strip().split(',')
                 if str(value) == splitted[title_dict[col_name]] and not line.startswith('#'):
-                    line = '#' + line
+                    line[0]='#'
                 tmp_file.write(line)
 
         self.create(tmp_name)
@@ -151,8 +151,8 @@ class SortedFile:
                 if current_id == max_id:
                     break
                 current_id = next_min_id
-            destination.seek(os.path.getsize(self.file_name) / 2)
-            print(destination.readline())
+            # destination.seek(os.path.getsize(self.file_name) / 2)
+            # print(destination.readline())
 
     def insert(self, line):
         """
@@ -229,6 +229,10 @@ class Hash:
         :param file_name: the name of the hash file to create. example: kiva_hash.txt
         :param N: number of buckets/slots.
         """
+        self.file_name = file_name
+        self.N = N
+        f = open(file_name, 'w')
+        f.close()
 
     def create(self, source_file, col_name):
         """
@@ -247,6 +251,25 @@ class Hash:
         653088|12,653048|10,653078|8,1080148|6,653068|3,
         653089|13,
         """
+        with open(source_file, 'r') as destination:
+            title = destination.readline().strip().split(',')
+            title_dict = {title[i]: i for i in range(title.__len__())}
+
+        with open(source_file, 'r+') as source, open(self.file_name, 'w+') as destination:
+            for i in range(self.N):
+                source.seek(0)
+                source.seek(source.readline().__len__()+1)
+                for count, line in enumerate(source):
+                    if count>18:
+                        break
+                    ID_string = str(line.strip().split(',')[title_dict[col_name]])
+                    print count
+                    ID = int(ID_string) if ID_string.isdigit() else ord(ID_string[0])
+                    if ID % self.N == i:
+                        destination.write(ID_string + '|'+str(count+1)+ ',')
+                destination.write('\n')
+
+
 
     def add(self, value, ptr):
         """
@@ -254,6 +277,7 @@ class Hash:
         :param value: the value of col_name of the new instance.
         :param ptr: the row number of the new instance in the heap file.
         """
+
 
     def remove(self, value, ptr):
         """
@@ -264,120 +288,47 @@ class Hash:
 
 
 # heap = Heap("heap_for_hash.txt")
-# hash = Hash('hash_file.txt', 10)
+hash = Hash('hash_file.txt', 10)
 
 # heap.create('kiva.txt')
-# hash.create('kiva.txt', 'lid')
+hash.create('kiva_loans.txt', 'lid')
 
 # heap.insert('653207,1500.0,USD,Agriculture')
 # hash.add('653207','11')
 
-def line_binary_search(filename, matchvalue, key=lambda val: val):
-    """
-    Binary search a file for matching lines.
-    Returns a list of matching lines.
-    filename - path to file, passed to 'open'
-    matchvalue - value to match
-    key - function to extract comparison value from line
-
-    >>> parser = lambda val: int(val.split('\t')[0].strip())
-    >>> line_binary_search('sd-arc', 63889187, parser)
-    ['63889187\t3592559\n', ...]
-    """
-
-    # Must be greater than the maximum length of any line.
-
-    max_line_len = 2 ** 12
-
-    start = pos = 0
-    end = os.path.getsize(filename)
-
-    with open(filename, 'rb') as fptr:
-
-        # Limit the number of times we binary search.
-
-        for rpt in xrange(50):
-
-            last = pos
-            pos = start + ((end - start) / 2)
-            fptr.seek(pos)
-
-            # Move the cursor to a newline boundary.
-
-            fptr.readline()
-
-            line = fptr.readline()
-            linevalue = key(line)
-
-            if linevalue == matchvalue or pos == last:
-
-                # Seek back until we no longer have a match.
-
-                while True:
-                    fptr.seek(-max_line_len, 1)
-                    fptr.readline()
-                    if matchvalue != key(fptr.readline()):
-                        break
-
-                # Seek forward to the first match.
-
-                for rpt in xrange(max_line_len):
-                    line = fptr.readline()
-                    linevalue = key(line)
-                    if matchvalue == linevalue:
-                        break
-                else:
-                    # No match was found.
-
-                    return []
-
-                results = []
-
-                while linevalue == matchvalue:
-                    results.append(line)
-                    line = fptr.readline()
-                    linevalue = key(line)
-
-                return results
-            elif linevalue < matchvalue:
-                start = fptr.tell()
-            else:
-                assert linevalue > matchvalue
-                end = fptr.tell()
-        else:
-            raise RuntimeError('binary search failed')
-
-
-# print line_binary_search('kiva_loans.txt','653067')
-
-
-
-
+'''
+key = '19999999999999999999999999999999999'
 fp = open('stam.txt')
-fp.seek(0, 2)
+fp.seek(0)
 begin = fp.readline().__len__()
+fp.seek(0, 2)
 end = fp.tell()
 
 while (begin < end):
     fp.seek(begin + ((end - begin) / 2), 0)
     flag = False
     x = fp.read(1)
-    while(x != '\n') and not flag:
+    while (x != '\n') and not flag:
         try:
-            fp.seek(fp.tell()-2, 0)
+            fp.seek(fp.tell() - 2, 0)
         except IOError:
             flag = True
         x = fp.read(1)
         if flag:
             fp.seek(0)
     if flag:
-       s = fp.readline()
+        s = fp.readline()
     place = fp.tell()
     line_key = fp.readline()
-    if ('0' == line_key.strip()):
+
+    first = float(key) if key.isdigit() else key
+    second = float(line_key.strip()) if line_key.strip().isdigit() else line_key.strip()
+
+    if (key == line_key.strip()):
         print 'falafel'
         break
-    elif ('0' > line_key.strip()) :#and line_key !='':
-        begin = place
+    elif first > second:
+        begin = place + 1
     else:
-        end = place
+        end = place - 1
+'''
