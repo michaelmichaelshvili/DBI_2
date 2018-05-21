@@ -62,7 +62,7 @@ class Heap:
             for line in origin:
                 splitted = line.strip().split(',')
                 if str(value) == splitted[title_dict[col_name]] and not line.startswith('#'):
-                    line[0]='#'
+                    line[0] = '#'
                 tmp_file.write(line)
 
         self.create(tmp_name)
@@ -158,32 +158,17 @@ class SortedFile:
         """
         The function insert new line to sorted file according to the value of col_name.
         :param line: string of row separated by comma. example: '653207,1500.0,USD,Agriculture'
-
+        """
         with open(self.file_name, 'r') as destination:
             title = destination.readline().strip().split(',')
             title_dict = {title[i]: i for i in range(title.__len__())}
-
-        tmp_name = 'tmp.txt'
-        line_id = line.strip().split(',')[title_dict[self.col_name]]
-        flag = False
-        with open(self.file_name,'r+') as origin, open(tmp_name, 'w') as tmp_file:
-            for _line in origin:
-                splitted = _line.strip().split(',')
-                if not flag and str(line_id) < splitted[title_dict[self.col_name]]:
-                    tmp_file.write(line + '\n')
-                    flag = True
-                tmp_file.write(_line)
-
-            if not flag:
-                tmp_file.write(line + '\n')
-        """
         tmp_name = 'tmp.txt'
         with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
             for _line in source:
-                destination.write(_line)
-            destination.write(line + '\n')
-
-        self.create(tmp_name)
+                if _line.split(',')[title_dict[self.col_name]] <= line.split(',')[title_dict[self.col_name]]:
+                    destination.write(_line)
+                else:
+                    destination.write(line)
         os.remove(tmp_name)
 
     def delete(self, value):
@@ -296,6 +281,8 @@ hash.create('kiva_loans.txt', 'lid')
 # heap.insert('653207,1500.0,USD,Agriculture')
 # hash.add('653207','11')
 
+
+def binarySearch(file_name, )
 '''
 key = '19999999999999999999999999999999999'
 fp = open('stam.txt')
