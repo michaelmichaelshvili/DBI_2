@@ -20,6 +20,22 @@ def randomFileName(size=5):
             pass
 
 
+def compare(a, b):
+    if a == b:
+        return 0
+    else:
+        if a.isdigit() and b.isdigit():
+            return 1 if float(a) - float(b) > 0 else -1
+        else:
+            try:
+                return 1 if float(a) - float(b) > 0 else -1
+            except:
+                return 1 if a > b else -1
+
+
+# compare('5', '4')
+
+
 class Heap:
     def __init__(self, file_name):
         """
@@ -56,12 +72,13 @@ class Heap:
         with open(self.file_name, 'r') as destination:
             title = destination.readline().strip().split(',')
             title_dict = {title[i]: i for i in range(title.__len__())}
+        col_value = title_dict[col_name]
 
         tmp_name = 'tmp.txt'
         with open(self.file_name, 'r+') as origin, open(tmp_name, 'w') as tmp_file:
             for line in origin:
                 splitted = line.strip().split(',')
-                if str(value) == splitted[title_dict[col_name]] and not line.startswith('#'):
+                if str(value) == splitted[col_value] and not line.startswith('#'):
                     line[0] = '#'
                 tmp_file.write(line)
 
@@ -110,6 +127,7 @@ class SortedFile:
         """
         self.file_name = file_name
         self.col_name = col_name
+        self.col_value = None
         f = open(file_name, 'w')
         f.close()
 
@@ -121,14 +139,15 @@ class SortedFile:
         with open(source_file, 'r') as destination:
             title = destination.readline().strip().split(',')
             title_dict = {title[i]: i for i in range(title.__len__())}
+        self.col_value = title_dict[self.col_name]
 
         min_id = None
         with open(source_file, 'r') as destination:
             destination.seek(destination.readline().__len__() + 1)
-            min_id = destination.readline().strip().split(',')[title_dict[self.col_name]]
+            min_id = destination.readline().strip().split(',')[self.col_value]
             max_id = min_id
             for line in destination:
-                line_id = line.split(',')[title_dict[self.col_name]]
+                line_id = line.split(',')[self.col_value]
                 min_id = min(min_id, line_id)
                 max_id = max(max_id, line_id)
 
@@ -159,16 +178,27 @@ class SortedFile:
         The function insert new line to sorted file according to the value of col_name.
         :param line: string of row separated by comma. example: '653207,1500.0,USD,Agriculture'
         """
-        with open(self.file_name, 'r') as destination:
-            title = destination.readline().strip().split(',')
-            title_dict = {title[i]: i for i in range(title.__len__())}
+        # with open(self.file_name, 'r') as destination:
+        #     title = destination.readline().strip().split(',')
+        #     title_dict = {title[i]: i for i in range(title.__len__())}
+        # col_value = title_dict[self.col_name]
         tmp_name = 'tmp.txt'
+        flag = True
         with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
             for _line in source:
-                if _line.split(',')[title_dict[self.col_name]] <= line.split(',')[title_dict[self.col_name]]:
-                    destination.write(_line)
+                if flag:
+                    if _line.strip().split(',')[self.col_value] <= line.strip().split(',')[
+                        self.col_value]:  # my comperator
+                        destination.write(_line)
+                    else:
+                        destination.write(line + "\n")
+                        destination.write(_line)
+                        flag = False
                 else:
-                    destination.write(line)
+                    destination.write(_line)
+        with open(tmp_name, 'r+') as source, open(self.file_name, 'w') as destination:
+            for line in source:
+                destination.write(line)
         os.remove(tmp_name)
 
     def delete(self, value):
@@ -184,21 +214,36 @@ class SortedFile:
         :param old_value: example: 'TZS'
         :param new_value: example: 'NIS'
         """
-        with open(self.file_name, 'r') as destination:
-            title = destination.readline().strip().split(',')
-            title_dict = {title[i]: i for i in range(title.__len__())}
+        # with open(self.file_name, 'r') as destination:
+        #     title = destination.readline().strip().split(',')
+        #     title_dict = {title[i]: i for i in range(title.__len__())}
+        # col_value = title_dict[self.col_name]
 
         tmp_name = 'tmp.txt'
         with open(self.file_name, 'r+') as origin, open(tmp_name, 'w') as tmp_file:
-            for line in origin:
-                splitted = line.strip().split(',')
-                if str(old_value) == splitted[title_dict[self.col_name]] and not line.startswith('#'):
-                    splitted[title_dict[self.col_name]] = new_value
-                    line = ','.join(splitted) + '\n'
-                tmp_file.write(line)
 
         self.create(tmp_name)
         os.remove(tmp_name)
+
+    def binary_search(self, value):
+        with open(self.file_name, 'r+') as origin:
+            title_len = origin.readline().__len__() + 1
+            origin.seek(title_len)
+            line_size = origin.readline().__len__()
+            origin.seek(0, 2)
+            num_of_lines = (origin.tell()-title_len) / line_size
+            # check
+            tmp = 0
+            origin.seek(0 + tmp)
+            isFound = False
+            while not isFound:
+                num_of_lines = num_of_lines/2
+                origin.seek(num_of_lines*line_size)
+                line = origin.readline()
+                if line.strip().split(',')[self.col_value] == value:
+                    isFound = True
+                    begin = origin.tell()
+
 
 
 # sf = SortedFile('SortedFile.txt', 'loan_amount')
@@ -239,22 +284,19 @@ class Hash:
         with open(source_file, 'r') as destination:
             title = destination.readline().strip().split(',')
             title_dict = {title[i]: i for i in range(title.__len__())}
+        col_value = title_dict[col_name]
 
         with open(source_file, 'r+') as source, open(self.file_name, 'w+') as destination:
             for i in range(self.N):
                 source.seek(0)
-                source.seek(source.readline().__len__()+1)
+                source.seek(source.readline().__len__() + 1)
+                current_line = '\n'
                 for count, line in enumerate(source):
-                    if count>18:
-                        break
-                    ID_string = str(line.strip().split(',')[title_dict[col_name]])
-                    print count
+                    ID_string = str(line.strip().split(',')[col_value])
                     ID = int(ID_string) if ID_string.isdigit() else ord(ID_string[0])
                     if ID % self.N == i:
-                        destination.write(ID_string + '|'+str(count+1)+ ',')
-                destination.write('\n')
-
-
+                        current_line = (ID_string + '|' + str(count + 1) + ',') + current_line
+                destination.write(current_line)
 
     def add(self, value, ptr):
         """
@@ -262,7 +304,11 @@ class Hash:
         :param value: the value of col_name of the new instance.
         :param ptr: the row number of the new instance in the heap file.
         """
-
+        tmp_name = 'tmp.txt'
+        with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
+            for counter, line in enumerate(source):
+                if value % self.N:
+                    pass  ###################
 
     def remove(self, value, ptr):
         """
@@ -281,9 +327,9 @@ hash.create('kiva_loans.txt', 'lid')
 # heap.insert('653207,1500.0,USD,Agriculture')
 # hash.add('653207','11')
 
-
-def binarySearch(file_name, )
 '''
+def binarySearch(file_name)
+
 key = '19999999999999999999999999999999999'
 fp = open('stam.txt')
 fp.seek(0)
