@@ -32,9 +32,11 @@ def compare(a, b):
             except:
                 return 1 if a > b else -1
 
-
-# compare('5', '4')
-
+def value_as_number(value):
+    try:
+        return float(value)
+    except:
+        return ord(value[0])
 
 class Heap:
     def __init__(self, file_name):
@@ -187,8 +189,8 @@ class SortedFile:
         with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
             for _line in source:
                 if flag:
-                    if _line.strip().split(',')[self.col_value] <= line.strip().split(',')[
-                        self.col_value]:  # my comperator
+                    if compare(_line.strip().split(',')[self.col_value],
+                               line.strip().split(',')[self.col_value]) != 1:
                         destination.write(_line)
                     else:
                         destination.write(line + "\n")
@@ -208,6 +210,18 @@ class SortedFile:
         :param value: example: 'PKR'
         """
 
+        begin, end = self.binary_search(value)
+        tmp_name = 'tmp.txt'
+        with open(self.file_name, 'r+') as origin, open(tmp_name, 'w') as destination:
+            origin.seek(0, 2)
+            EOF = origin.tell()
+            origin.seek(0)
+            while origin.tell() < begin and origin.tell() < EOF:
+                destination.write(origin.readline())
+            origin.seek(end)
+            while origin.tell() < EOF:
+                destination.write(origin.readline())
+
     def update(self, old_value, new_value):
         """
         The function update records from the sorted file where their value in col_name is old_value to new_value.
@@ -218,39 +232,111 @@ class SortedFile:
         #     title = destination.readline().strip().split(',')
         #     title_dict = {title[i]: i for i in range(title.__len__())}
         # col_value = title_dict[self.col_name]
+        if old_value == new_value:
+            return
 
         tmp_name = 'tmp.txt'
-        with open(self.file_name, 'r+') as origin, open(tmp_name, 'w') as tmp_file:
+        with open(self.file_name, 'r+') as origin, open(tmp_name, 'w') as destination:
+            origin.seek(0, 2)
+            EOF = origin.tell()
+            origin.seek(0)
+            begin, end = self.binary_search(old_value)
+            flag = False
+            destination.write(origin.readline())
+            line_size = origin.readline().__len__()
+            origin.seek(-line_size,1)
+            if compare(old_value, new_value) == 1:
+                while origin.tell() < EOF and compare(origin.readline().strip().split(',')[self.col_value],
+                                                      new_value) != 1:
+                    origin.seek(-line_size,1)
+                    destination.write(origin.readline())
+                place = origin.tell()
+                origin.seek(begin)
+                while origin.tell() <= end:
+                    line = origin.readline()
+                    splitted = line.strip().split(',')
+                    splitted[self.col_value] = new_value
+                    destination.write(','.join(splitted) + '\n')
+                origin.seek(place)
+                while origin.tell() < begin:
+                    destination.write(origin.readline())
+                origin.seek(end)
+                while origin.tell() < EOF:
+                    destination.write(origin.readline())
 
-        self.create(tmp_name)
+            if compare(old_value, new_value) == -1:
+                while origin.tell() < EOF and origin.tell() < begin:
+                    destination.write(origin.readline())
+                origin.seek(end)
+                while origin.tell() < EOF and compare(origin.readline().strip().split(',')[self.col_value],
+                                                      new_value) != 1:
+                    origin.seek(-line_size,1)
+                    destination.write(origin.readline())
+                place = origin.tell()
+                origin.seek(begin)
+                while origin.tell() <= end:
+                    line = origin.readline()
+                    splitted = line.strip().split(',')
+                    splitted[self.col_value] = new_value
+                    destination.write(','.join(splitted) + '\n')
+                origin.seek(place)
+                while origin.tell() < EOF:
+                    destination.write(origin.readline())
+
+        # self.create(tmp_name)
         os.remove(tmp_name)
 
+    # if value not exist
     def binary_search(self, value):
+        '''
+
+        :param value: the value we want to search
+        :return: the start and the end of the block that contain the value in the sorted file
+        '''
         with open(self.file_name, 'r+') as origin:
+            origin.seek(0)
             title_len = origin.readline().__len__() + 1
             origin.seek(title_len)
-            line_size = origin.readline().__len__()
+            line_size = origin.readline().__len__() + 1
             origin.seek(0, 2)
-            num_of_lines = (origin.tell()-title_len) / line_size
-            # check
-            tmp = 0
-            origin.seek(0 + tmp)
+            num_of_lines = (origin.tell() - title_len) / line_size
+            origin.seek(0)
+            origin.readline()
             isFound = False
+            num_of_lines = num_of_lines / 2
             while not isFound:
-                num_of_lines = num_of_lines/2
-                origin.seek(num_of_lines*line_size)
+                origin.seek(num_of_lines * (line_size) + title_len)
                 line = origin.readline()
                 if line.strip().split(',')[self.col_value] == value:
                     isFound = True
+                    break
+                elif line.strip().split(',')[self.col_value] < value:
+                    num_of_lines = num_of_lines + num_of_lines / 2
+                else:
+                    num_of_lines = num_of_lines - num_of_lines / 2
+            place = origin.tell()
+            begin = place
+            origin.readline()
+            while True:
+                origin.seek(origin.tell() - 2 * line_size)
+                line = origin.readline()
+                if line.strip().split(',')[self.col_value] != value:
                     begin = origin.tell()
+                    break
+            origin.seek(place)
+            while True:
+                line = origin.readline()
+                if line.strip().split(',')[self.col_value] != value:
+                    end = origin.tell() - line_size
+                    break
+            return begin, end
 
 
-
-# sf = SortedFile('SortedFile.txt', 'loan_amount')
-# sf.create('kiva_loans.txt')
+sf = SortedFile('SortedFile.txt', 'loan_amount')
+sf.create('kiva_loans.txt')
 # sf.insert('653207,2.0,USD,Agriculture')
 # sf.delete('625.0')
-# sf.update('150.0', '12')
+sf.update('150.0', '12')
 
 
 class Hash:
@@ -292,8 +378,10 @@ class Hash:
                 source.seek(source.readline().__len__() + 1)
                 current_line = '\n'
                 for count, line in enumerate(source):
+                    if count>19:
+                        break
                     ID_string = str(line.strip().split(',')[col_value])
-                    ID = int(ID_string) if ID_string.isdigit() else ord(ID_string[0])
+                    ID = value_as_number(ID_string)
                     if ID % self.N == i:
                         current_line = (ID_string + '|' + str(count + 1) + ',') + current_line
                 destination.write(current_line)
@@ -307,8 +395,13 @@ class Hash:
         tmp_name = 'tmp.txt'
         with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
             for counter, line in enumerate(source):
-                if value % self.N:
-                    pass  ###################
+                if ptr % self.N == counter:
+                    destination.write(value + '|' + ptr + ',' + line)
+                else:
+                    destination.write(line)
+        with open(self.file_name, 'w') as source, open(tmp_name, 'r+') as destination:
+            for line in destination:
+                source.write(line)
 
     def remove(self, value, ptr):
         """
@@ -316,6 +409,22 @@ class Hash:
         :param value: the value of col_name.
         :param ptr: the row number of the instance in the heap file.
         """
+        tmp_name = 'tmp.txt'
+        with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
+            for counter, line in enumerate(source):
+                ivalue = value_as_number(value)
+                if ivalue % self.N == counter:
+                    splitted = line.strip().split(',')
+                    try:
+                        splitted.remove(value + '|' + ptr)
+                    except:
+                        pass
+                    destination.write(','.join(splitted)+'\n')
+                else:
+                    destination.write(line)
+        with open(self.file_name, 'w') as source, open(tmp_name, 'r+') as destination:
+            for line in destination:
+                source.write(line)
 
 
 # heap = Heap("heap_for_hash.txt")
@@ -326,42 +435,3 @@ hash.create('kiva_loans.txt', 'lid')
 
 # heap.insert('653207,1500.0,USD,Agriculture')
 # hash.add('653207','11')
-
-'''
-def binarySearch(file_name)
-
-key = '19999999999999999999999999999999999'
-fp = open('stam.txt')
-fp.seek(0)
-begin = fp.readline().__len__()
-fp.seek(0, 2)
-end = fp.tell()
-
-while (begin < end):
-    fp.seek(begin + ((end - begin) / 2), 0)
-    flag = False
-    x = fp.read(1)
-    while (x != '\n') and not flag:
-        try:
-            fp.seek(fp.tell() - 2, 0)
-        except IOError:
-            flag = True
-        x = fp.read(1)
-        if flag:
-            fp.seek(0)
-    if flag:
-        s = fp.readline()
-    place = fp.tell()
-    line_key = fp.readline()
-
-    first = float(key) if key.isdigit() else key
-    second = float(line_key.strip()) if line_key.strip().isdigit() else line_key.strip()
-
-    if (key == line_key.strip()):
-        print 'falafel'
-        break
-    elif first > second:
-        begin = place + 1
-    else:
-        end = place - 1
-'''
