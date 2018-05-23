@@ -1,5 +1,6 @@
 import os
-import timeit
+import time
+unichr(0)
 
 unicode(5)
 
@@ -335,7 +336,7 @@ class SortedFile:
 
 
 sf = SortedFile('SortedFile.txt', 'loan_amount')
-sf.create('copy ‏‏kiva_loans.txt')
+sf.create('copy_loans.txt')
 #sf.insert('653207,2.0,USD,Agri##')
 # sf.delete('100.0')
 sf.insert("654524,125.0,KES,Serv")
@@ -343,7 +344,6 @@ sf.delete('125.0')
 # sf.delete('975.0')
 # sf.delete('175.0')
 # sf.update('975.0', '110.0')
-sf.binary_search("100.0")
 
 class Hash:
     def __init__(self, file_name, N=5):
