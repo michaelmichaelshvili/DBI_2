@@ -1,14 +1,5 @@
 import os
-
-
-# return the n'th occurency of needle in haystack
-def indexof(haystack, needle, n):
-    start = haystack.find(needle)
-    while start >= 0 and n > 1:
-        start = haystack.find(needle, start + 1)
-        n -= 1
-    return start
-
+import timeit
 
 def randomFileName(size=5):
     while True:
@@ -32,11 +23,13 @@ def compare(a, b):
             except:
                 return 1 if a > b else -1
 
+
 def value_as_number(value):
     try:
         return float(value)
     except:
         return ord(value[0])
+
 
 class Heap:
     def __init__(self, file_name):
@@ -81,7 +74,7 @@ class Heap:
             for line in origin:
                 splitted = line.strip().split(',')
                 if str(value) == splitted[col_value] and not line.startswith('#'):
-                    line[0] = '#'
+                    line = '#' + line[1:]
                 tmp_file.write(line)
 
         self.create(tmp_name)
@@ -113,8 +106,8 @@ class Heap:
 
 '''
 heap = Heap('heap.txt')
-heap.create('kiva_loans.txt')
-heap.insert('653207,1500.0,NIS,Agriculture')
+heap.create('kiva_loans.csv')
+heap.insert('653207,500.0,NIS,Agri')
 heap.update('currency','PKR','NIS')
 heap.delete('currency','NIS')
 '''
@@ -180,13 +173,12 @@ class SortedFile:
         The function insert new line to sorted file according to the value of col_name.
         :param line: string of row separated by comma. example: '653207,1500.0,USD,Agriculture'
         """
-        # with open(self.file_name, 'r') as destination:
-        #     title = destination.readline().strip().split(',')
-        #     title_dict = {title[i]: i for i in range(title.__len__())}
-        # col_value = title_dict[self.col_name]
+
         tmp_name = 'tmp.txt'
         flag = True
         with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
+            title = source.readline()
+            destination.write(title)
             for _line in source:
                 if flag:
                     if compare(_line.strip().split(',')[self.col_value],
@@ -211,6 +203,9 @@ class SortedFile:
         """
 
         begin, end = self.binary_search(value)
+
+        if begin == 0 and end == 0:
+            return
         tmp_name = 'tmp.txt'
         with open(self.file_name, 'r+') as origin, open(tmp_name, 'w') as destination:
             origin.seek(0, 2)
@@ -221,6 +216,9 @@ class SortedFile:
             origin.seek(end)
             while origin.tell() < EOF:
                 destination.write(origin.readline())
+        with open(self.file_name, 'w+') as origin, open(tmp_name, 'r') as destination:
+            for _line in destination:
+                origin.write(_line)
 
     def update(self, old_value, new_value):
         """
@@ -228,10 +226,6 @@ class SortedFile:
         :param old_value: example: 'TZS'
         :param new_value: example: 'NIS'
         """
-        # with open(self.file_name, 'r') as destination:
-        #     title = destination.readline().strip().split(',')
-        #     title_dict = {title[i]: i for i in range(title.__len__())}
-        # col_value = title_dict[self.col_name]
         if old_value == new_value:
             return
 
@@ -241,14 +235,17 @@ class SortedFile:
             EOF = origin.tell()
             origin.seek(0)
             begin, end = self.binary_search(old_value)
+            if begin == 0 and end == 0:
+                return
             flag = False
             destination.write(origin.readline())
             line_size = origin.readline().__len__()
-            origin.seek(-line_size,1)
+            origin.seek(-line_size -1, 1)
+            line = origin.readline()
             if compare(old_value, new_value) == 1:
                 while origin.tell() < EOF and compare(origin.readline().strip().split(',')[self.col_value],
                                                       new_value) != 1:
-                    origin.seek(-line_size,1)
+                    origin.seek(-line_size-1, 1)
                     destination.write(origin.readline())
                 place = origin.tell()
                 origin.seek(begin)
@@ -270,7 +267,7 @@ class SortedFile:
                 origin.seek(end)
                 while origin.tell() < EOF and compare(origin.readline().strip().split(',')[self.col_value],
                                                       new_value) != 1:
-                    origin.seek(-line_size,1)
+                    origin.seek(-line_size-1, 1)
                     destination.write(origin.readline())
                 place = origin.tell()
                 origin.seek(begin)
@@ -284,6 +281,9 @@ class SortedFile:
                     destination.write(origin.readline())
 
         # self.create(tmp_name)
+        with open(self.file_name, 'w+') as origin, open(tmp_name, 'r') as destination:
+            for _line in destination:
+                origin.write(_line)
         os.remove(tmp_name)
 
     # if value not exist
@@ -297,47 +297,60 @@ class SortedFile:
             origin.seek(0)
             title_len = origin.readline().__len__() + 1
             origin.seek(title_len)
+            SOF = origin.tell()
             line_size = origin.readline().__len__() + 1
             origin.seek(0, 2)
+            EOF = origin.tell()
             num_of_lines = (origin.tell() - title_len) / line_size
             origin.seek(0)
             origin.readline()
             isFound = False
             num_of_lines = num_of_lines / 2
-            while not isFound:
+            preLine = num_of_lines
+            while not isFound and SOF <= origin.tell() < EOF and preLine>0:
                 origin.seek(num_of_lines * (line_size) + title_len)
                 line = origin.readline()
                 if line.strip().split(',')[self.col_value] == value:
                     isFound = True
                     break
-                elif line.strip().split(',')[self.col_value] < value:
-                    num_of_lines = num_of_lines + num_of_lines / 2
+                elif compare(line.strip().split(',')[self.col_value], value) == -1:
+                    num_of_lines = num_of_lines + preLine / 2
+                    preLine = preLine/2
                 else:
-                    num_of_lines = num_of_lines - num_of_lines / 2
+                    num_of_lines = num_of_lines - preLine / 2
+                    preLine = preLine/2
+            if not isFound:
+                return 0,0
             place = origin.tell()
             begin = place
             origin.readline()
-            while True:
+            while origin.tell() > SOF:
                 origin.seek(origin.tell() - 2 * line_size)
                 line = origin.readline()
                 if line.strip().split(',')[self.col_value] != value:
                     begin = origin.tell()
                     break
             origin.seek(place)
-            while True:
+            while origin.tell() < EOF:
                 line = origin.readline()
                 if line.strip().split(',')[self.col_value] != value:
                     end = origin.tell() - line_size
                     break
+                if origin.tell()==EOF:
+                    end = origin.tell()
+
             return begin, end
 
 
 sf = SortedFile('SortedFile.txt', 'loan_amount')
 sf.create('kiva_loans.txt')
-# sf.insert('653207,2.0,USD,Agriculture')
-# sf.delete('625.0')
-sf.update('150.0', '12')
-
+#sf.insert('653207,2.0,USD,Agri##')
+# sf.delete('100.0')
+# sf.delete('125.0')
+# sf.delete('975.0')
+# sf.delete('175.0')
+# sf.update('975.0', '110.0')
+sf.binary_search("100.0")
 
 class Hash:
     def __init__(self, file_name, N=5):
@@ -378,7 +391,7 @@ class Hash:
                 source.seek(source.readline().__len__() + 1)
                 current_line = '\n'
                 for count, line in enumerate(source):
-                    if count>19:
+                    if count > 19:
                         break
                     ID_string = str(line.strip().split(',')[col_value])
                     ID = value_as_number(ID_string)
@@ -395,7 +408,8 @@ class Hash:
         tmp_name = 'tmp.txt'
         with open(self.file_name, 'r+') as source, open(tmp_name, 'w+') as destination:
             for counter, line in enumerate(source):
-                if ptr % self.N == counter:
+                ID = value_as_number(value)
+                if ID % self.N == counter:
                     destination.write(value + '|' + ptr + ',' + line)
                 else:
                     destination.write(line)
@@ -419,7 +433,7 @@ class Hash:
                         splitted.remove(value + '|' + ptr)
                     except:
                         pass
-                    destination.write(','.join(splitted)+'\n')
+                    destination.write(','.join(splitted) + '\n')
                 else:
                     destination.write(line)
         with open(self.file_name, 'w') as source, open(tmp_name, 'r+') as destination:
@@ -427,11 +441,12 @@ class Hash:
                 source.write(line)
 
 
-# heap = Heap("heap_for_hash.txt")
+heap = Heap("heap_for_hash.txt")
 hash = Hash('hash_file.txt', 10)
 
-# heap.create('kiva.txt')
+heap.create('kiva_loans.txt')
 hash.create('kiva_loans.txt', 'lid')
 
-# heap.insert('653207,1500.0,USD,Agriculture')
-# hash.add('653207','11')
+heap.insert('653207,1500.0,USD,Agriculture')
+hash.add('653207','11')
+hash.remove('653068','3')
