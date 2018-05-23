@@ -1,15 +1,7 @@
 import os
 import timeit
 
-def randomFileName(size=5):
-    while True:
-        try:
-            filen = os.urandom(size)
-            with open(str(filen) + '.txt', 'w'):
-                return filen
-        except:
-            pass
-
+unicode(5)
 
 def compare(a, b):
     if a == b:
