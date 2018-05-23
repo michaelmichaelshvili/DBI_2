@@ -335,10 +335,11 @@ class SortedFile:
 
 
 sf = SortedFile('SortedFile.txt', 'loan_amount')
-sf.create('kiva_loans.txt')
+sf.create('copy ‏‏kiva_loans.txt')
 #sf.insert('653207,2.0,USD,Agri##')
 # sf.delete('100.0')
-# sf.delete('125.0')
+sf.insert("654524,125.0,KES,Serv")
+sf.delete('125.0')
 # sf.delete('975.0')
 # sf.delete('175.0')
 # sf.update('975.0', '110.0')
@@ -432,7 +433,7 @@ class Hash:
             for line in destination:
                 source.write(line)
 
-
+'''
 heap = Heap("heap_for_hash.txt")
 hash = Hash('hash_file.txt', 10)
 
@@ -442,3 +443,4 @@ hash.create('kiva_loans.txt', 'lid')
 heap.insert('653207,1500.0,USD,Agriculture')
 hash.add('653207','11')
 hash.remove('653068','3')
+'''
