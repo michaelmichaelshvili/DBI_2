@@ -1,10 +1,12 @@
 import os
-import time
-unichr(0)
-
-unicode(5)
 
 def compare(a, b):
+    """
+    compare between to variable according to them type
+    :param a: to compare with b
+    :param b: to compare with a
+    :return: 1 if a>b 0 if a==b and -1 if a<b
+    """
     if a == b:
         return 0
     else:
@@ -18,6 +20,11 @@ def compare(a, b):
 
 
 def value_as_number(value):
+    """
+
+    :param value: parameter to value in hash function
+    :return: value as number if is number or the unicode of the first letter
+    """
     try:
         return float(value)
     except:
@@ -97,15 +104,6 @@ class Heap:
         os.remove(tmp_name)
 
 
-'''
-heap = Heap('heap.txt')
-heap.create('kiva_loans.csv')
-heap.insert('653207,500.0,NIS,Agri')
-heap.update('currency','PKR','NIS')
-heap.delete('currency','NIS')
-'''
-
-
 class SortedFile:
 
     def __init__(self, file_name, col_name):
@@ -158,8 +156,7 @@ class SortedFile:
                 if current_id == max_id:
                     break
                 current_id = next_min_id
-            # destination.seek(os.path.getsize(self.file_name) / 2)
-            # print(destination.readline())
+
 
     def insert(self, line):
         """
@@ -194,9 +191,7 @@ class SortedFile:
         Deletion done by mark # in the head of line.
         :param value: example: 'PKR'
         """
-
         begin, end = self.binary_search(value)
-
         if begin == 0 and end == 0:
             return
         tmp_name = 'tmp.txt'
@@ -212,6 +207,7 @@ class SortedFile:
         with open(self.file_name, 'w+') as origin, open(tmp_name, 'r') as destination:
             for _line in destination:
                 origin.write(_line)
+        os.remove(tmp_name)
 
     def update(self, old_value, new_value):
         """
@@ -273,7 +269,6 @@ class SortedFile:
                 while origin.tell() < EOF:
                     destination.write(origin.readline())
 
-        # self.create(tmp_name)
         with open(self.file_name, 'w+') as origin, open(tmp_name, 'r') as destination:
             for _line in destination:
                 origin.write(_line)
@@ -335,15 +330,6 @@ class SortedFile:
             return begin, end
 
 
-sf = SortedFile('SortedFile.txt', 'loan_amount')
-sf.create('copy_loans.txt')
-#sf.insert('653207,2.0,USD,Agri##')
-# sf.delete('100.0')
-sf.insert("654524,125.0,KES,Serv")
-sf.delete('125.0')
-# sf.delete('975.0')
-# sf.delete('175.0')
-# sf.update('975.0', '110.0')
 
 class Hash:
     def __init__(self, file_name, N=5):
@@ -384,8 +370,6 @@ class Hash:
                 source.seek(source.readline().__len__() + 1)
                 current_line = '\n'
                 for count, line in enumerate(source):
-                    if count > 19:
-                        break
                     ID_string = str(line.strip().split(',')[col_value])
                     ID = value_as_number(ID_string)
                     if ID % self.N == i:
@@ -403,13 +387,13 @@ class Hash:
             for counter, line in enumerate(source):
                 ID = value_as_number(value)
                 if ID % self.N == counter:
-                    destination.write(value + '|' + ptr + ',' + line)
+                    destination.write(str(value) + '|' + str(ptr) + ',' + line)
                 else:
                     destination.write(line)
         with open(self.file_name, 'w') as source, open(tmp_name, 'r+') as destination:
             for line in destination:
                 source.write(line)
-
+        os.remove(tmp_name)
     def remove(self, value, ptr):
         """
         The function delete <value|ptr> from hash table.
@@ -432,15 +416,334 @@ class Hash:
         with open(self.file_name, 'w') as source, open(tmp_name, 'r+') as destination:
             for line in destination:
                 source.write(line)
+        os.remove(tmp_name)
 
-'''
-heap = Heap("heap_for_hash.txt")
-hash = Hash('hash_file.txt', 10)
 
-heap.create('kiva_loans.txt')
-hash.create('kiva_loans.txt', 'lid')
 
-heap.insert('653207,1500.0,USD,Agriculture')
-hash.add('653207','11')
-hash.remove('653068','3')
-'''
+# timing:
+
+def writeToCSV(name, time_for_create, time_for_insert, time_for_update, time_for_delete):
+    import csv
+    try:
+        my_file = open('times_for_' + name + '.csv', 'wb')
+        cwriter = csv.writer(my_file, delimiter=',')
+        cwriter.writerow(['index', 'create time', 'insert time', 'update time', 'delete time'])
+        for j in range(50):
+            cwriter.writerow([str(j), str(time_for_create[j]), str(time_for_insert[j]), str(time_for_update[j]), str(time_for_delete[j])])
+        my_file.close()
+    except IOError:
+        print('Error printing to file, ' + name)
+
+
+def writeHashToCSV(name, time_for_create_lid, time_for_insert_lid, time_for_delete_lid, time_for_create_loan_amount, time_for_insert_loan_amount, time_for_delete_loan_amount, time_for_create_sector, time_for_insert_sector, time_for_delete_sector):
+    import csv
+    try:
+        my_file = open('times_for_' + name + '.csv', 'wb')
+        cwriter = csv.writer(my_file, delimiter=',')
+        cwriter.writerow(['hashing by lid', '', '', '', '', 'hashing by loan_amount', '', '', '', '', 'hashing by sector', '', '', ''])
+        cwriter.writerow(['index', 'create time', 'insert time', 'delete time', '', 'index', 'create time', 'insert time', 'delete time', '', 'index', 'create time', 'insert time', 'delete time'])
+        for j in range(50):
+            cwriter.writerow([str(j), str(time_for_create_lid[j]), str(time_for_insert_lid[j]), str(time_for_delete_lid[j]), '', str(j), str(time_for_create_loan_amount[j]), str(time_for_insert_loan_amount[j]), str(time_for_delete_loan_amount[j]), '', str(j), str(time_for_create_sector[j]), str(time_for_insert_sector[j]), str(time_for_delete_sector[j])])
+        my_file.close()
+    except IOError:
+        print('Error printing to file, ' + name)
+
+import timeit
+
+file_name = 'fixed_kiva_loans_1000_first_rows.txt'
+file_50_rows = 'fixed_kiva_loans_extra_50_rows.txt'
+line_insert = ''
+
+
+print 'analizing hash 10'
+print 'hashing by lid'
+# times for hash 10 lid
+hash_10_time_for_create_lid = []
+hash_10_time_for_insert_lid = []
+hash_10_time_for_delete_lid = []
+
+hash_10 = Hash('hash_10.txt', 10)
+for i in range(50):
+    hash_10_time_for_create_lid.append(timeit.timeit("hash_10.create('" + file_name + "', 'lid')", number=1, setup="from __main__ import hash_10, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[0]
+        hash_10_time_for_insert_lid.append(timeit.timeit("hash_10.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_10, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[0]
+        hash_10_time_for_delete_lid.append(timeit.timeit("hash_10.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_10, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+print 'hashing by loan amount'
+# times for hash 10 loan amount
+hash_10_time_for_create_loan_amount = []
+hash_10_time_for_insert_loan_amount = []
+hash_10_time_for_delete_loan_amount = []
+
+hash_10 = Hash('hash_10.txt', 10)
+for i in range(50):
+    hash_10_time_for_create_loan_amount.append(timeit.timeit("hash_10.create('" + file_name + "', 'loan_amount')", number=1, setup="from __main__ import hash_10, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[1]
+        hash_10_time_for_insert_loan_amount.append(timeit.timeit("hash_10.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_10, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[1]
+        hash_10_time_for_delete_loan_amount.append(timeit.timeit("hash_10.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_10, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+
+print 'hashing by sector'
+# times for hash 10 sector
+hash_10_time_for_create_sector = []
+hash_10_time_for_insert_sector = []
+hash_10_time_for_delete_sector = []
+
+hash_10 = Hash('hash_10.txt', 10)
+for i in range(50):
+    hash_10_time_for_create_sector.append(timeit.timeit("hash_10.create('" + file_name + "', 'sector')", number=1, setup="from __main__ import hash_10, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[3]
+        hash_10_time_for_insert_sector.append(timeit.timeit("hash_10.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_10, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[3]
+        hash_10_time_for_delete_sector.append(timeit.timeit("hash_10.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_10, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+writeHashToCSV('hash_10', hash_10_time_for_create_lid, hash_10_time_for_insert_lid, hash_10_time_for_delete_lid, hash_10_time_for_create_loan_amount, hash_10_time_for_insert_loan_amount, hash_10_time_for_delete_loan_amount, hash_10_time_for_create_sector, hash_10_time_for_insert_sector, hash_10_time_for_delete_sector)
+
+print 'analizing hash 100'
+print 'hashing by lid'
+# times for hash 100 lid
+hash_100_time_for_create_lid = []
+hash_100_time_for_insert_lid = []
+hash_100_time_for_delete_lid = []
+
+hash_100 = Hash('hash_100.txt', 100)
+for i in range(50):
+    hash_100_time_for_create_lid.append(timeit.timeit("hash_100.create('" + file_name + "', 'lid')", number=1, setup="from __main__ import hash_100, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[0]
+        hash_100_time_for_insert_lid.append(timeit.timeit("hash_100.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_100, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[0]
+        hash_100_time_for_delete_lid.append(timeit.timeit("hash_100.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_100, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+print 'hashing by loan amount'
+# times for hash 100 loan amount
+hash_100_time_for_create_loan_amount = []
+hash_100_time_for_insert_loan_amount = []
+hash_100_time_for_delete_loan_amount = []
+
+hash_100 = Hash('hash_100.txt', 100)
+for i in range(50):
+    hash_100_time_for_create_loan_amount.append(timeit.timeit("hash_100.create('" + file_name + "', 'loan_amount')", number=1, setup="from __main__ import hash_100, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[1]
+        hash_100_time_for_insert_loan_amount.append(timeit.timeit("hash_100.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_100, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[1]
+        hash_100_time_for_delete_loan_amount.append(timeit.timeit("hash_100.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_100, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+
+print 'hashing by sector'
+# times for hash 100 sector
+hash_100_time_for_create_sector = []
+hash_100_time_for_insert_sector = []
+hash_100_time_for_delete_sector = []
+
+hash_100 = Hash('hash_100.txt', 100)
+for i in range(50):
+    hash_100_time_for_create_sector.append(timeit.timeit("hash_100.create('" + file_name + "', 'sector')", number=1, setup="from __main__ import hash_100, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[3]
+        hash_100_time_for_insert_sector.append(timeit.timeit("hash_100.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_100, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[3]
+        hash_100_time_for_delete_sector.append(timeit.timeit("hash_100.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_100, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+writeHashToCSV('hash_100', hash_100_time_for_create_lid, hash_100_time_for_insert_lid, hash_100_time_for_delete_lid, hash_100_time_for_create_loan_amount, hash_100_time_for_insert_loan_amount, hash_100_time_for_delete_loan_amount, hash_100_time_for_create_sector, hash_100_time_for_insert_sector, hash_100_time_for_delete_sector)
+
+print 'analizing hash 1000'
+print 'hashing by lid'
+# times for hash 1000 lid
+hash_1000_time_for_create_lid = []
+hash_1000_time_for_insert_lid = []
+hash_1000_time_for_delete_lid = []
+
+hash_1000 = Hash('hash_1000.txt', 1000)
+for i in range(50):
+    hash_1000_time_for_create_lid.append(timeit.timeit("hash_1000.create('" + file_name + "', 'lid')", number=1, setup="from __main__ import hash_1000, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[0]
+        hash_1000_time_for_insert_lid.append(timeit.timeit("hash_1000.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_1000, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[0]
+        hash_1000_time_for_delete_lid.append(timeit.timeit("hash_1000.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_1000, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+print 'hashing by loan amount'
+# times for hash 1000 loan amount
+hash_1000_time_for_create_loan_amount = []
+hash_1000_time_for_insert_loan_amount = []
+hash_1000_time_for_delete_loan_amount = []
+
+hash_1000 = Hash('hash_1000.txt', 1000)
+for i in range(50):
+    hash_1000_time_for_create_loan_amount.append(timeit.timeit("hash_1000.create('" + file_name + "', 'loan_amount')", number=1, setup="from __main__ import hash_1000, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[1]
+        hash_1000_time_for_insert_loan_amount.append(timeit.timeit("hash_1000.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_1000, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[1]
+        hash_1000_time_for_delete_loan_amount.append(timeit.timeit("hash_1000.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_1000, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+
+print 'hashing by sector'
+# times for hash 1000 sector
+hash_1000_time_for_create_sector = []
+hash_1000_time_for_insert_sector = []
+hash_1000_time_for_delete_sector = []
+
+hash_1000 = Hash('hash_1000.txt', 1000)
+for i in range(50):
+    hash_1000_time_for_create_sector.append(timeit.timeit("hash_1000.create('" + file_name + "', 'sector')", number=1, setup="from __main__ import hash_1000, file_name"))
+
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        insert_val = line_insert.strip().split(',')[3]
+        hash_1000_time_for_insert_sector.append(timeit.timeit("hash_1000.add('" + str(insert_val) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_1000, file_name"))
+    test.close()
+except IOError:
+    print 'error inserting'
+
+try:
+    test = open(file_50_rows, 'r')
+    for num, row in enumerate(test, 1):
+        line_insert = row[:-1]
+        delete_key = line_insert.strip().split(",")[3]
+        hash_1000_time_for_delete_sector.append(timeit.timeit("hash_1000.remove('" + str(delete_key) + "', '" + str(num + 1000) + "')", number=1, setup="from __main__ import hash_1000, file_name"))
+    test.close()
+except IOError:
+    print 'error deleting'
+
+writeHashToCSV('hash_1000', hash_1000_time_for_create_lid, hash_1000_time_for_insert_lid, hash_1000_time_for_delete_lid, hash_1000_time_for_create_loan_amount, hash_1000_time_for_insert_loan_amount, hash_1000_time_for_delete_loan_amount, hash_1000_time_for_create_sector, hash_1000_time_for_insert_sector, hash_1000_time_for_delete_sector)
+
+print 'done'
