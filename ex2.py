@@ -241,8 +241,7 @@ class SortedFile:
                     origin.seek(-line_size-1, 1)
                     destination.write(origin.readline())
                     enter = True
-                if not enter:
-                    origin.seek(-line_size-1, 1)
+                origin.seek(-line_size-1, 1)
                 place = origin.tell()
                 origin.seek(begin)
                 while origin.tell() < end:
@@ -265,6 +264,7 @@ class SortedFile:
                                                       new_value) != 1:
                     origin.seek(-line_size-1, 1)
                     destination.write(origin.readline())
+                #origin.seek(-line_size - 1, 1)
                 place = origin.tell()
                 origin.seek(begin)
                 while origin.tell() < end:
@@ -503,4 +503,4 @@ class Hash:
 sf = SortedFile("SF.txt",'sector')
 sf.create('copy_loans.txt')
 sf.update('Reta','Zzzz')
-sf.update('Zzzz','Reta')
+# sf.update('Zzzz','Reta')
